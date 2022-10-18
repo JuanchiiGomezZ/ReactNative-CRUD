@@ -8,7 +8,8 @@ const CreateUser = () => {
 const [state, setState] = useState({
   name:'',
   email:'',
-  phone: ''
+  phone: '',
+  img:''
 })
 
 const navigation = useNavigation();
@@ -45,6 +46,9 @@ else{
         </View>
         <View>
           <TextInput style={styles.textInputs} placeholder="Phone User" onChangeText={(e) => setState({...state, phone: e})} />
+        </View>
+        <View>
+          <TextInput style={styles.textInputs} placeholder="Image Link" onChangeText={(e) => setState({...state, img: e})} />
         </View>
         <View>
           <Button title="Save user" onPress={() => saveNewUser()} />

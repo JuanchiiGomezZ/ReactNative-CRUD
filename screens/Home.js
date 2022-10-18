@@ -13,9 +13,6 @@ const Home = () => {
         <View style={styles.btn}>
         <Button  title="Users list" onPress={() =>{navigation.navigate("UsersList")}}/>
         </View>
-        <View style={styles.btn}>
-        <Button title="User Detail" onPress={() =>{navigation.navigate("UserDetail")}}/>
-        </View>
     </View>
     
     
