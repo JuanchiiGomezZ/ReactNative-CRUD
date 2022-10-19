@@ -1,79 +1,124 @@
 import React, { useState, useEffect } from "react";
-import { View, Button, TextInput, ScrollView, StyleSheet } from "react-native";
-import {db} from '../firebase/firebase'
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  View,
+  Button,
+  TextInput,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
+import { db } from "../firebase/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { useNavigation } from "@react-navigation/native";
 
-
-
 const UpdateUser = (props) => {
-    let userId = props.route.params.userId;
-   
-    const [state, setState] = useState({
-        name:'',
-        email:'',
-        phone: '',
-        img:''
-      })
-      
-      const navigation = useNavigation();
-      
-      const upadateUser = () =>{
-        const queryDoc = doc(db, "users", userId);
-      }
-      
-      const saveNewUser = () =>{
-        if(state.name === ""){
-          alert('Please provide a name')
-        }
-        else if(state.email === ""){
-          alert('Please provide a name')
-        }
-        else if(state.phone === ""){
-          alert('Please provide a phone')
-        }
-      else{
+  const userId = props.route.params.userId;
+  const initialState = {
+    name: "",
+    email: "",
+    phone: "",
+    id: "",
+  };
+  const [user, setUser] = useState(initialState);
+  const [isLoading, setisLoading] = useState(true);
 
-        navigation.navigate("Home")
-      }
-      }
-      
-        return (
-          <ScrollView>
-            <View style={styles.container}>
-              <View>
-                <TextInput style={styles.textInputs} placeholder="Name User" onChangeText={(e) => setState({...state, name: e})} />
-              </View>
-              <View>
-                <TextInput style={styles.textInputs} placeholder="Email User" onChangeText={(e) => setState({...state, email: e})} />
-              </View>
-              <View>
-                <TextInput style={styles.textInputs} placeholder="Phone User" onChangeText={(e) => setState({...state, phone: e})} />
-              </View>
-              <View>
-                <TextInput style={styles.textInputs} placeholder="Image Link" onChangeText={(e) => setState({...state, img: e})} />
-              </View>
-              <View>
-                <Button title="Save user" onPress={() => saveNewUser()} />
-              </View>
+  const navigation = useNavigation();
+
+  const handleTextChange = (value, prop) => {
+    setUser({ ...user, [prop]: value });
+  };
+
+  const getUserById = () => {
+    const queryDoc = doc(db, "users", userId);
+    getDoc(queryDoc).then((res) => setUser(res.data()));
+  };
+  useEffect(() => {
+    getUserById();
+    isLoading(false)
+  }, []);
+
+  const upadateUser = async () => {
+    await setDoc(doc(db, "users", userId), {
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      img: user.img,
+    });
+    setUser(initialState);
+    Alert.alert("User updated", "You have been edited the user", [
+      {
+        text: "Continue",
+        onPress: () => {
+          navigation.navigate("Home");
+        },
+      },
+    ]);
+  };
+
+  return (
+    <ScrollView>
+      <View style={styles.container}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" />
+          </View>
+        ) : (
+          <>
+            <View>
+              <TextInput
+                style={styles.textInputs}
+                placeholder="Name User"
+                onChangeText={(value) => handleTextChange(value, "name")}
+                value={user.name}
+              />
             </View>
-          </ScrollView>
-        );
-      };
-      
-      const styles = StyleSheet.create({
-        container: {
-        marginHorizontal:30
-        },
-        textInputs: {
-          backgroundColor: "#cccc",
-          height: 40,
-          fontSize: 19,
-          borderRadius: 10,
-          paddingHorizontal: 10,
-          marginVertical: 10,
-        },
-      });
+            <View>
+              <TextInput
+                style={styles.textInputs}
+                placeholder="Email User"
+                onChangeText={(value) => handleTextChange(value, "email")}
+                value={user.email}
+              />
+            </View>
+            <View>
+              <TextInput
+                style={styles.textInputs}
+                placeholder="Phone User"
+                onChangeText={(value) => handleTextChange(value, "phone")}
+                value={user.phone}
+              />
+            </View>
+            <View>
+              <TextInput
+                style={styles.textInputs}
+                placeholder="Image Link"
+                onChangeText={(value) => handleTextChange(value, "img")}
+                value={user.img}
+              />
+            </View>
+            <View>
+              <Button title="Save user" onPress={upadateUser} />
+            </View>
+          </>
+        )}
+      </View>
+    </ScrollView>
+  );
+};
 
+const styles = StyleSheet.create({
+  container: {
+    marginHorizontal: 30,
+  },
+  textInputs: {
+    backgroundColor: "#cccc",
+    height: 40,
+    fontSize: 19,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    marginVertical: 10,
+  },
+});
 
 export default UpdateUser;

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
   Image,
   TextInput,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator
 } from "react-native";
 import * as firestore from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -17,22 +17,26 @@ const UsersList = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const users = [];
+    setIsLoading(true);
     firestore
       .getDocs(firestore.collection(db, "users"))
       .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
-          const {name, email, phone} = doc.data();
+          const {name, email, phone, img} = doc.data();
           users.push({
             id: doc.id,
             name,
             email,
-            phone
+            phone,
+            img
           })
         });
         setUsers(users)
+        setIsLoading(false)
       });
   }, []);
 
@@ -46,25 +50,30 @@ const UsersList = () => {
           onChangeText={(e) => setSearch(e)}
         />
       </View>
-      <View style={styles.usersContainer}>
-        <FlatList
-          data={users.filter(user => ((user.name).toLocaleLowerCase()).includes(search.toLocaleLowerCase()))}
-          renderItem={({ item }) => {
-            return (
-              <TouchableOpacity style={styles.userCard} key={item.id} onPress={() =>{navigation.navigate("UserDetail", {userId:item.id})}} >
-                <Image
-                  source={{ uri: "https://i.postimg.cc/FKK80vKQ/147144.png" }}
-                  style={styles.userImage}
-                />
-                <View>
-                <Text  style={styles.userName}>{item.name[0].toUpperCase() + item.name.slice(1)}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
+      {
+        isLoading
+        ? (<View style={styles.loadingContainer}><ActivityIndicator size="large"/></View>)
+        :( <View style={styles.usersContainer}>
+          <FlatList
+            data={users.filter(user => ((user.name).toLocaleLowerCase()).includes(search.toLocaleLowerCase()))}
+            renderItem={({ item }) => {
+              return (
+                <TouchableOpacity style={styles.userCard} key={item.id} onPress={() =>{navigation.navigate("UserDetail", {userId:item.id})}} >
+                  <Image
+                    source={{ uri:item.img }}
+                    style={styles.userImage}
+                  />
+                  <View>
+                  <Text  style={styles.userName}>{item.name[0].toUpperCase() + item.name.slice(1)}</Text>
+                  <Text style={styles.userEmail}>{item.email}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </View>)
+      }
+
     </>
   );
 };
@@ -113,6 +122,10 @@ const styles = StyleSheet.create({
   userEmail: {
     marginLeft: 11,
     color:'gray'
+  },
+  loadingContainer:{
+    flex:1,
+    justifyContent: "center",
   },
 });
 export default UsersList;

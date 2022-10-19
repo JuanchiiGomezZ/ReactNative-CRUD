@@ -2,10 +2,11 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  ScrollView,
   StyleSheet,
   Image,
   FlatList,
+  ActivityIndicator,
+  Alert
 } from "react-native";
 import { getDoc, doc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -16,6 +17,7 @@ const UserDetail = (props) => {
   let userId = props.route.params.userId;
   const [user, setUser] = useState([]);
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const getUserById = () => {
     const queryDoc = doc(db, "users", userId);
@@ -23,7 +25,13 @@ const UserDetail = (props) => {
   };
 
   useEffect(() => {
-    getUserById()
+    setIsLoading(true);
+    setTimeout(() => {
+      getUserById()
+      setIsLoading(false);
+    },1500);
+    
+
   }, []);
 
 
@@ -32,33 +40,43 @@ const UserDetail = (props) => {
     navigation.navigate("Home");
   }
 
+  const openConfirmationAlert = () =>{
+    Alert.alert('Remove user', 'Are you sure?', [
+      {text: 'Yes', onPress: () => {deleteUserFromFirebase}},
+      {text: 'No', onPress: () => {}}
+    ])
+  }
+
   return (
     <>
       <View style={styles.container}>
         <Text style={styles.title}>Profile</Text>
-
-          <FlatList 
-          data={[user]}
-          renderItem={({item}) =>{
-            return(
-              <>
-              <View style={styles.containerImage}>
-              <Image
-                style={styles.image}
-                source={{ uri: "https://i.postimg.cc/FKK80vKQ/147144.png" }}
-              />
-            </View>
-            <View style={styles.description}>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.email}>{item.email}</Text>
-              <Text style={styles.phone}>{item.phone}</Text>
-              <Text style={styles.updateBtn} onPress={() =>{navigation.navigate("UpdateUser", {userId: userId})}}>Update user</Text>
-              <Text style={styles.deleteBtn} onPress={deleteUserFromFirebase}>Delete user</Text>
-            </View>
-            </>
-            )
-          }}
-          />
+        {
+          isLoading
+          ? (<View style={styles.loadingContainer}><ActivityIndicator size="large"/></View>)
+          :(<FlatList 
+            data={[user]}
+            renderItem={({item}) =>{
+              return(
+                <>
+                <View style={styles.containerImage}>
+                <Image
+                  style={styles.image}
+                  source={{ uri: item.img }}
+                />
+              </View>
+              <View style={styles.description}>
+                <Text style={styles.name}>{item.name}</Text>
+                <Text style={styles.email}>{item.email}</Text>
+                <Text style={styles.phone}>{item.phone}</Text>
+                <Text style={styles.updateBtn} onPress={() =>{navigation.navigate("UpdateUser", {userId: userId})}}>Edit user</Text>
+                <Text style={styles.deleteBtn} onPress={openConfirmationAlert}>Delete user</Text>
+              </View>
+              </>
+              )
+            }}
+            />)
+        }
       </View>
     </>
   );
@@ -113,6 +131,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "white",
     borderRadius: 20,
+  },
+  loadingContainer:{
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop:100,
   },
 });
 export default UserDetail;
